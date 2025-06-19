@@ -218,7 +218,7 @@ def draw_ui_elements(surface, current_elapsed_time, mines_rem): # Changed screen
     global UI_FONT
     ui_rect = pygame.Rect(0, GAME_SCREEN_HEIGHT, TOTAL_SCREEN_WIDTH, UI_AREA_HEIGHT)
     pygame.draw.rect(surface, UI_BG_COLOR, ui_rect)
-    timer_text = UI_FONT.render(f"Time: {current_elapsed_time}", True, UI_TEXT_COLOR)
+    timer_text = UI_FONT.render(f"Time: {current_elapsed_time} sec", True, UI_TEXT_COLOR)
     timer_text_rect = timer_text.get_rect(midleft=(10, GAME_SCREEN_HEIGHT +2+ UI_AREA_HEIGHT // 2))
     surface.blit(timer_text, timer_text_rect)
     mine_text = UI_FONT.render(f"Mines: {mines_rem}", True, UI_TEXT_COLOR)
