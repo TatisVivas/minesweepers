@@ -28,6 +28,8 @@ STATE_PLAYING = 0; STATE_GAME_OVER_LOSE = 1; STATE_GAME_OVER_WIN = 2
 
 CELL_FONT = None
 UI_FONT = None
+UI_FONT_SMALL = None
+UI_FONT_TINY = None  # Added tiny font for game over message
 
 # --- Game State Variables --- (will be managed by a function or class later)
 # These will be part of what reset_game_state handles
@@ -111,6 +113,33 @@ def calculate_adjacent_mines(board):
                         mine_count += 1
             board[r][c] = mine_count
 
+def count_adjacent_mines(grid, row, col):
+    # Count mines in all 8 adjacent cells
+    count = 0
+    
+    # Check all 8 surrounding positions
+    for i in range(max(0, row-1), min(len(grid), row+2)):
+        for j in range(max(0, col-1), min(len(grid[0]), col+2)):
+            # Skip the cell itself
+            if (i == row and j == col):
+                continue
+            # If neighbor has a mine, increment count
+            if grid[i][j].is_mine:
+                count += 1
+    
+    return count
+
+# Find where the grid is initialized and mine counts are assigned
+# Replace or fix the current counting logic with:
+def update_mine_counts(grid):
+    rows, cols = len(grid), len(grid[0])
+    for i in range(rows):
+        for j in range(cols):
+            # Skip mine cells
+            if not grid[i][j].is_mine:
+                # Count adjacent mines
+                grid[i][j].adjacent_mines = count_adjacent_mines(grid, i, j)
+
 def initialize_game_boards_for_state(rows, cols, num_m, first_click_coords=None): # Renamed
     global mine_board, player_board # Modify global boards
     mine_board = create_empty_board(rows, cols)
@@ -190,7 +219,7 @@ def draw_ui_elements(surface, current_elapsed_time, mines_rem): # Changed screen
     ui_rect = pygame.Rect(0, GAME_SCREEN_HEIGHT, TOTAL_SCREEN_WIDTH, UI_AREA_HEIGHT)
     pygame.draw.rect(surface, UI_BG_COLOR, ui_rect)
     timer_text = UI_FONT.render(f"Time: {current_elapsed_time}", True, UI_TEXT_COLOR)
-    timer_text_rect = timer_text.get_rect(midleft=(10, GAME_SCREEN_HEIGHT + UI_AREA_HEIGHT // 2))
+    timer_text_rect = timer_text.get_rect(midleft=(10, GAME_SCREEN_HEIGHT +2+ UI_AREA_HEIGHT // 2))
     surface.blit(timer_text, timer_text_rect)
     mine_text = UI_FONT.render(f"Mines: {mines_rem}", True, UI_TEXT_COLOR)
     mine_text_rect = mine_text.get_rect(midright=(TOTAL_SCREEN_WIDTH - 10, GAME_SCREEN_HEIGHT + UI_AREA_HEIGHT // 2))
@@ -224,7 +253,7 @@ def reset_game_state(rows=GRID_ROWS_DEFAULT, cols=GRID_COLS_DEFAULT, num_m=NUM_M
 
 
 def main():
-    global CELL_FONT, UI_FONT, screen # Make screen global
+    global CELL_FONT, UI_FONT, UI_FONT_SMALL, UI_FONT_TINY, screen # Make screen global
     global mine_board, player_board, flags_placed, game_state, is_first_click, start_time, elapsed_time
     global current_grid_rows, current_grid_cols, current_num_mines
 
@@ -232,6 +261,8 @@ def main():
     pygame.init()
     CELL_FONT = pygame.font.SysFont("arial", CELL_SIZE // 2)
     UI_FONT = pygame.font.SysFont("arial", UI_AREA_HEIGHT // 3)
+    UI_FONT_SMALL = pygame.font.SysFont('comicsans', 24)  # Create a smaller font (adjust size as needed)
+    UI_FONT_TINY = pygame.font.SysFont('comicsans', 14)  # Create a very small font for the game over message
 
     # Initial game setup uses default values
     reset_game_state() # Initial setup
@@ -308,13 +339,15 @@ def main():
         draw_ui_elements(screen, elapsed_time, mines_remaining)
 
         if game_state == STATE_GAME_OVER_LOSE:
-            lose_text = UI_FONT.render("GAME OVER - YOU LOSE! (R to Restart)", True, MINE_COLOR)
-            text_rect = lose_text.get_rect(center=(TOTAL_SCREEN_WIDTH // 2, GAME_SCREEN_HEIGHT + UI_AREA_HEIGHT // 2))
-            screen.blit(lose_text, text_rect)
+            
+            lose_text = UI_FONT_TINY.render("GAME OVER - YOU LOSE! (R to Restart)", True, MINE_COLOR)
+            # Adjust only the Y-coordinate in the blit call to position it lower
+            screen.blit(lose_text, (TOTAL_SCREEN_WIDTH//2 - lose_text.get_width()//2, GAME_SCREEN_HEIGHT - 0.05))
+
         elif game_state == STATE_GAME_OVER_WIN:
-            win_text = UI_FONT.render("CONGRATULATIONS - YOU WIN! (R to Restart)", True, FLAG_COLOR)
+            win_text = UI_FONT_TINY.render("CONGRATULATIONS - YOU WIN! (R to Restart)", True, FLAG_COLOR)
             text_rect = win_text.get_rect(center=(TOTAL_SCREEN_WIDTH // 2, GAME_SCREEN_HEIGHT + UI_AREA_HEIGHT // 2))
-            screen.blit(win_text, text_rect)
+            screen.blit(win_text, (TOTAL_SCREEN_WIDTH//2 - win_text.get_width()//2, GAME_SCREEN_HEIGHT - 0.05))
 
         pygame.display.flip()
         clock.tick(60)
